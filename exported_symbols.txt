@@ -1,0 +1,739 @@
+package manifold // import "github.com/e74000/manifold"
+
+
+VARIABLES
+
+var (
+	ErrorGETFailed             = errors.New("GET failed")
+	ErrorPOSTFailed            = errors.New("POST failed")
+	ErrorFailedToParseResponse = errors.New("failed to parse response")
+)
+
+TYPES
+
+type Answer struct {
+	...
+}
+    Answer represents a possible answer in a market.
+
+type AnyTxnType struct {
+	...
+}
+    AnyTxnType represents the generic type of transaction.
+
+type ApiAnswer struct {
+	...
+}
+    ApiAnswer represents the API's version of an answer, with adjusted fields.
+
+type Bet struct {
+	...
+}
+    Bet represents a bet placed in a contract.
+
+type BetService struct {
+	// Has unexported fields.
+}
+    BetService provides methods for interacting with bets, including retrieving
+    bets, creating new bets, and canceling existing bets.
+
+func (s *BetService) Bets(userID *string, username *string, contractID *string, contractSlug *string, limit *int, before *string, after *string, beforeTime *time.Time, afterTime *time.Time, kinds *string, order *string) ([]Bet, error)
+    Bets retrieves a list of bets based on various filtering criteria.
+
+    Parameters:
+      - userID: Filter bets by the ID of the user who placed them. Optional.
+      - username: Filter bets by the username of the user who placed them.
+        Optional.
+      - contractID: Filter bets by the ID of the contract. Optional.
+      - contractSlug: Filter bets by the slug of the contract. Optional.
+      - limit: Limits the number of results returned. Must be between 0 and
+        1000. Optional.
+      - before: Only return bets placed before this cursor (e.g., a timestamp or
+        ID). Optional.
+      - after: Only return bets placed after this cursor (e.g., a timestamp or
+        ID). Optional.
+      - beforeTime: Only return bets placed before this timestamp. Optional.
+      - afterTime: Only return bets placed after this timestamp. Optional.
+      - kinds: Filter bets by their kind (e.g., "open-limit"). Optional.
+      - order: Sort results in "asc" or "desc" order based on placement time.
+        Optional.
+
+    Returns:
+      - []Bet: A slice of bets matching the specified criteria.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *BetService) Cancel(id string) error
+    Cancel cancels an existing bet.
+
+    Parameters:
+      - id: The ID of the bet to cancel. Required.
+
+    Returns:
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *BetService) Create(amount float64, contractID string, outcome *string, limitProb *float64, expiresAt *time.Time, dryRun *bool) (*Bet, error)
+    Create places a new bet on a contract.
+
+    Parameters:
+      - amount: The amount of the bet. Required.
+      - contractID: The ID of the contract on which the bet is being placed.
+        Required.
+      - outcome: The outcome of the bet (e.g., "YES" or "NO"). Optional.
+      - limitProb: Probability threshold for a limit order. Must be between 0
+        and 1. Optional.
+      - expiresAt: Expiration time for a limit order. Only valid if limitProb is
+        set. Optional.
+      - dryRun: If true, simulates the bet without placing it. Optional.
+
+    Returns:
+      - *Bet: The created bet object.
+      - error: An error object if the request fails, input validation fails,
+        or the response cannot be parsed.
+
+type Client struct {
+	BaseURL    string       // The base URL for the Manifold API.
+	APIKey     string       // The API key used for authentication with the Manifold API.
+	HTTPClient *http.Client // The HTTP client used to perform requests.
+
+	User    *UserService    // Service for user-related API calls.
+	Group   *GroupService   // Service for group-related API calls.
+	Market  *MarketService  // Service for market-related API calls.
+	Bet     *BetService     // Service for bet-related API calls.
+	Comment *CommentService // Service for comment-related API calls.
+	Mana    *ManaService    // Service for mana-related API calls.
+}
+    Client represents the Manifold API client, used to interact with various
+    services such as users, groups, markets, and more. It manages API requests
+    and provides access to all the available services.
+
+func NewClient(apiKey string) *Client
+    NewClient creates a new instance of the Manifold API client.
+
+    Parameters:
+      - apiKey: The API key used for authenticating with the Manifold API.
+
+    Returns:
+      - *Client: A pointer to the newly created Client instance, pre-configured
+        with services.
+
+func (c *Client) GET(endpoint string, params map[string]string) ([]byte, error)
+    GET performs a GET request to the Manifold API.
+
+    Parameters:
+      - endpoint: The API endpoint to send the GET request to (relative to
+        BaseURL).
+      - params: A map of query parameters to include in the request. Optional.
+
+    Returns:
+      - []byte: The response body as a byte slice.
+      - error: An error object if the request fails or if the response cannot be
+        read.
+
+func (c *Client) POST(endpoint string, body interface{}) ([]byte, error)
+    POST performs a POST request to the Manifold API.
+
+    Parameters:
+      - endpoint: The API endpoint to send the POST request to (relative to
+        BaseURL).
+      - body: The body to include in the POST request. Must be serializable to
+        JSON. Optional.
+
+    Returns:
+      - []byte: The response body as a byte slice.
+      - error: An error object if the request fails or if the response cannot be
+        read.
+
+type Comment struct {
+	...
+}
+    Comment represents a user comment associated with a bet, contract,
+    or other entities. Comments may include replies, visibility settings,
+    and status indicators (e.g., pinned, hidden).
+
+type CommentService struct {
+	// Has unexported fields.
+}
+    CommentService provides methods for interacting with comments on contracts,
+    including retrieving, posting text, HTML, and Markdown comments.
+
+func (s *CommentService) Comment(id string, content string) error
+    Comment posts a json TipTap comment on a contract.
+
+    Parameters:
+      - id: The ID of the contract to comment on. Required.
+      - content: The text content of the comment. Required.
+
+    Returns:
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *CommentService) CommentHTML(id string, content string) error
+    CommentHTML posts an HTML comment on a contract.
+
+    Parameters:
+      - id: The ID of the contract to comment on. Required.
+      - content: The HTML content of the comment. Required.
+
+    Returns:
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *CommentService) CommentMarkdown(id string, content string) error
+    CommentMarkdown posts a Markdown-formatted comment on a contract.
+
+    Parameters:
+      - id: The ID of the contract to comment on. Required.
+      - content: The Markdown content of the comment. Required.
+
+    Returns:
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *CommentService) Comments(contractID *string, contractSlug *string, limit *int, offset *int, userID *string) ([]Comment, error)
+    Comments retrieves a list of comments for a specific contract.
+
+    Parameters:
+      - contractID: Filter comments by the ID of the contract. Optional.
+      - contractSlug: Filter comments by the slug of the contract. Optional.
+      - limit: Limits the number of results returned. Must be between 0 and
+        1000. Optional.
+      - offset: Skips the specified number of comments before returning results.
+        Must be 0 or greater. Optional.
+      - userID: Filter comments by the ID of the user who posted them. Optional.
+
+    Returns:
+      - []Comment: A slice of comments matching the specified criteria.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+type ContractMetric struct {
+	...
+}
+    ContractMetric represents a metric related to a contract.
+
+type DisplayUser struct {
+	...
+}
+    DisplayUser represents a simplified view of a user, often used for display
+    purposes.
+
+type Fees struct {
+	...
+}
+    Fees represents the fees associated with a bet or a fill.
+
+type Fill struct {
+	...
+}
+    Fill represents a record of a transaction that partially or fully fills a
+    bet order.
+
+type FullMarket struct {
+	...
+}
+    FullMarket represents a comprehensive view of a market, extending
+    LiteMarket.
+
+type Group struct {
+	...
+}
+    Group represents a group with various attributes.
+
+type GroupService struct {
+	// Has unexported fields.
+}
+    GroupService provides methods for interacting with groups, including
+    retrieving a list of groups, getting details of a specific group by slug or
+    ID.
+
+func (s *GroupService) Group(slug string) (*Group, error)
+    Group retrieves the details of a specific group using its slug.
+
+    Parameters:
+      - slug: The slug of the group to retrieve. Required.
+
+    Returns:
+      - *Group: A pointer to the retrieved group object.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *GroupService) Groups(beforeTime *time.Time, availableToUserID *string) ([]Group, error)
+    Groups retrieves a list of groups based on optional filtering criteria.
+
+    Parameters:
+      - beforeTime: Only return groups created before this timestamp. Optional.
+      - availableToUserID: Filter groups that are available to the specified
+        user ID. Optional.
+
+    Returns:
+      - []Group: A slice of groups matching the specified criteria.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *GroupService) ID(id string) (*Group, error)
+    ID retrieves the details of a specific group using its ID.
+
+    Parameters:
+      - id: The ID of the group to retrieve. Required.
+
+    Returns:
+      - *Group: A pointer to the retrieved group object.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+type Leaderboard struct {
+	...
+}
+    Leaderboard represents the cached leaderboard for a group.
+
+type LimitProps struct {
+	...
+}
+    LimitProps represents properties specific to limit orders.
+
+type LiteMarket struct {
+	...
+}
+    LiteMarket represents a basic view of a market with essential fields.
+
+type ManaService struct {
+	// Has unexported fields.
+}
+
+func (s *ManaService) Managram(toIDs []string, amount float64, message *string) error
+    Managram sends a Managram to one or more users.
+
+    Parameters:
+      - toIDs: A list of user IDs to send the Managram to. Required.
+      - amount: The amount of Mana to send. Required.
+      - message: An optional message to include with the Managram. Optional.
+
+    Returns:
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *ManaService) Managrams(toID *string, fromID *string, limit *int, before *time.Time, after *time.Time) ([]Txn, error)
+    Managrams retrieves a list of Managram transactions based on optional
+    filtering criteria.
+
+    Parameters:
+      - toID: Filter transactions by the recipient's user ID. Optional.
+      - fromID: Filter transactions by the sender's user ID. Optional.
+      - limit: Limits the number of results returned. Must be between 0 and
+        1000. Optional.
+      - before: Only return transactions before this timestamp. Optional.
+      - after: Only return transactions after this timestamp. Optional.
+
+    Returns:
+      - []Txn: A slice of transactions matching the specified criteria.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+type MarketService struct {
+	// Has unexported fields.
+}
+    MarketService provides methods for managing markets, including retrieving
+    market data, creating new markets, adding liquidity or bounties, resolving
+    markets, and more.
+
+func (s *MarketService) AddBounty(id string, amount float64) (*Txn, error)
+    AddBounty adds a bounty to a market.
+
+    Parameters:
+      - id: The ID of the market to add the bounty to. Required.
+      - amount: The amount of the bounty. Must be greater than zero. Required.
+
+    Returns:
+      - *Txn: A pointer to the transaction object representing the added bounty.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) AddLiquidity(id string, amount float64) (*Txn, error)
+    AddLiquidity adds liquidity to a market.
+
+    Parameters:
+      - id: The ID of the market to add liquidity to. Required.
+      - amount: The amount of liquidity to add. Must be greater than zero.
+        Required.
+
+    Returns:
+      - *Txn: A pointer to the transaction object representing the added
+        liquidity.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) Answer(id string, text string) error
+    Answer submits an answer to a market.
+
+    Parameters:
+      - id: The ID of the market to answer. Required.
+      - text: The answer text to submit. Required.
+
+    Returns:
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *MarketService) AwardBounty(id string, amount float64, commentID string) (*Txn, error)
+    AwardBounty awards a bounty to a specific comment on a market.
+
+    Parameters:
+      - id: The ID of the market to award the bounty for. Required.
+      - amount: The amount of the bounty to award. Must be greater than zero.
+        Required.
+      - commentID: The ID of the comment to award the bounty to. Required.
+
+    Returns:
+      - *Txn: A pointer to the transaction object representing the awarded
+        bounty.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) Close(id string, closeTime *time.Time) error
+    Close closes a market, setting a specific close time if provided.
+
+    Parameters:
+      - id: The ID of the market to close. Required.
+      - closeTime: The time when the market should close. Must be in the future
+        if provided. Optional.
+
+    Returns:
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) CreateBinary(question string, initialProb int, description *string, closeTime *time.Time, visibility *string, extraLiquidity *int) (*LiteMarket, error)
+    CreateBinary creates a binary market.
+
+    Parameters:
+      - question: The question the market is based on. Required.
+      - initialProb: The initial probability (between 1 and 99) of the market
+        outcome. Required.
+      - description: A description of the market. Optional.
+      - closeTime: The time when the market will close. Must be in the future.
+        Optional.
+      - visibility: The visibility of the market ("public" or "unlisted").
+        Optional.
+      - extraLiquidity: The extra liquidity to add to the market. Optional.
+
+    Returns:
+      - *LiteMarket: A pointer to the created market object.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) CreateBountiedQuestion(question string, totalBounty int, description *string, closeTime *time.Time, visibility *string) (*LiteMarket, error)
+    CreateBountiedQuestion creates a bountied question market.
+
+    Parameters:
+      - question: The question the market is based on. Required.
+      - totalBounty: The total bounty amount for the question. Must be greater
+        than zero. Required.
+      - description: A description of the market. Optional.
+      - closeTime: The time when the market will close. Must be in the future.
+        Optional.
+      - visibility: The visibility of the market ("public" or "unlisted").
+        Optional.
+
+    Returns:
+      - *LiteMarket: A pointer to the created market object.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) CreatePoll(question string, answers []string, description *string, closeTime *time.Time, visibility *string) (*LiteMarket, error)
+    CreatePoll creates a poll market.
+
+    Parameters:
+      - question: The question the poll is based on. Required.
+      - answers: The possible answers for the poll. Must include at least two
+        answers. Required.
+      - description: A description of the poll. Optional.
+      - closeTime: The time when the poll will close. Must be in the future.
+        Optional.
+      - visibility: The visibility of the poll ("public" or "unlisted").
+        Optional.
+
+    Returns:
+      - *LiteMarket: A pointer to the created poll object.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) CreatePseudoNumeric(question string, min, max, initialValue int, isLogScale bool, description *string, closeTime *time.Time, visibility *string, extraLiquidity *int) (*LiteMarket, error)
+    CreatePseudoNumeric creates a pseudo-numeric market.
+
+    Parameters:
+      - question: The question the market is based on. Required.
+      - min: The minimum value for the market. Required.
+      - max: The maximum value for the market. Required.
+      - initialValue: The initial value for the market, between min and max.
+        Required.
+      - isLogScale: Whether the market uses a logarithmic scale. Required.
+      - description: A description of the market. Optional.
+      - closeTime: The time when the market will close. Must be in the future.
+        Optional.
+      - visibility: The visibility of the market ("public" or "unlisted").
+        Optional.
+      - extraLiquidity: The extra liquidity to add to the market. Optional.
+
+    Returns:
+      - *LiteMarket: A pointer to the created market object.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) Group(id string, groupID string, remove *bool) error
+    Group adds or removes a market from a group.
+
+    Parameters:
+      - id: The ID of the market to group. Required.
+      - groupID: The ID of the group to add or remove the market from. Required.
+      - remove: If true, removes the market from the group; otherwise, adds the
+        market to the group. Optional.
+
+    Returns:
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) Market(id string) (*FullMarket, error)
+    Market retrieves the details of a specific market using its ID.
+
+    Parameters:
+      - id: The ID of the market to retrieve. Required.
+
+    Returns:
+      - *FullMarket: A pointer to the retrieved market object.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *MarketService) Markets(limit *int, sort *string, order *string, before *string, userID *string, groupID *string) ([]LiteMarket, error)
+    Markets retrieves a list of markets based on various filtering criteria.
+
+    Parameters:
+      - limit: Limits the number of results returned. Must be between 0 and
+        1000. Optional.
+      - sort: Sorts the results based on one of the allowed sorting options
+        (e.g., "created-time", "updated-time"). Optional.
+      - order: Specifies the order of the results, either "asc" or "desc".
+        Optional.
+      - before: Retrieves markets created before this cursor. Optional.
+      - userID: Filters markets created by a specific user ID. Optional.
+      - groupID: Filters markets associated with a specific group ID. Optional.
+
+    Returns:
+      - []LiteMarket: A slice of markets matching the specified criteria.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) Positions(id string) ([]ContractMetric, error)
+    Positions retrieves the positions for a specific market using its ID.
+
+    Parameters:
+      - id: The ID of the market to retrieve positions for. Required.
+
+    Returns:
+      - []ContractMetric: A slice of contract metrics representing the
+        positions.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *MarketService) ResolveBinary(id string, outcome string, probabilityInt *int) (*LiteMarket, error)
+    ResolveBinary resolves a binary market.
+
+    Parameters:
+      - id: The ID of the market to resolve. Required.
+      - outcome: The outcome of the market ("YES", "NO", "MKT", "CANCEL").
+        Required.
+      - probabilityInt: The probability integer (0-100) if the outcome is "MKT".
+        Optional.
+
+    Returns:
+      - *LiteMarket: A pointer to the resolved market object.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) ResolveFreeResponse(id string, outcome string, resolutions []Resolution) (*LiteMarket, error)
+    ResolveFreeResponse resolves a free response or multiple choice market.
+
+    Parameters:
+      - id: The ID of the market to resolve. Required.
+      - outcome: The outcome of the market ("MKT", "CANCEL"). Required.
+      - resolutions: A slice of resolutions with percentages for each outcome if
+        outcome is "MKT". Optional.
+
+    Returns:
+      - *LiteMarket: A pointer to the resolved market object.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) ResolveNumeric(id string, outcome string, value *float64, probabilityInt *int) (*LiteMarket, error)
+    ResolveNumeric resolves a numeric market.
+
+    Parameters:
+      - id: The ID of the market to resolve. Required.
+      - outcome: The outcome of the market ("CANCEL"). Required.
+      - value: The final value of the market. Optional.
+      - probabilityInt: The probability integer (0-100) if applicable. Optional.
+
+    Returns:
+      - *LiteMarket: A pointer to the resolved market object.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) Search(term string, sort *string, filter *string, contractType *string, topicSlug *string, creatorID *string, limit *int, offset *int) ([]LiteMarket, error)
+    Search searches for markets based on various criteria.
+
+    Parameters:
+      - term: The search term. Required.
+      - sort: Sorts the results based on one of the allowed sorting options
+        (e.g., "newest", "score"). Optional.
+      - filter: Filters results based on their state (e.g., "open", "closed").
+        Optional.
+      - contractType: Filters results based on the type of contract (e.g.,
+        "BINARY", "POLL"). Optional.
+      - topicSlug: Filters results based on a topic slug. Optional.
+      - creatorID: Filters results based on the creator's user ID. Optional.
+      - limit: Limits the number of results returned. Must be between 0 and
+        1000. Optional.
+      - offset: Skips the specified number of results before returning. Must be
+        0 or greater. Optional.
+
+    Returns:
+      - []LiteMarket: A slice of markets matching the specified criteria.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) Sell(id string, outcome *string, shares *float64, answerID *string) (*Bet, error)
+    Sell sells shares in a market.
+
+    Parameters:
+      - id: The ID of the market to sell shares in. Required.
+      - outcome: The outcome to sell shares in ("YES" or "NO"). Optional.
+      - shares: The number of shares to sell. Must be greater than zero.
+        Optional.
+      - answerID: The ID of the specific answer to sell shares in for multiple
+        choice markets. Optional.
+
+    Returns:
+      - *Bet: A pointer to the bet object representing the sale.
+      - error: An error object if the request fails or if input validation
+        fails.
+
+func (s *MarketService) Slug(slug string) (*FullMarket, error)
+    Slug retrieves the details of a market using its slug.
+
+    Parameters:
+      - slug: The slug of the market to retrieve. Required.
+
+    Returns:
+      - *FullMarket: A pointer to the retrieved market object.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+type PeriodMetrics struct {
+	...
+}
+    PeriodMetrics represents the profit and investment metrics for a specific
+    period.
+
+type ProfitCached struct {
+	...
+}
+    ProfitCached holds cached profit data for different time periods.
+
+type Resolution struct {
+	...
+}
+    Resolution represents the outcome of a resolution process, typically
+    associated with a market or contract. It details the answer selected and the
+    percentage allocated to it.
+
+type Trader struct {
+	...
+}
+    Trader represents a user and their score on the leaderboard.
+
+type Txn struct {
+	...
+}
+    Txn represents a transaction within the system. This can involve different
+    entities, such as users or contracts, and may include various types of
+    financial operations.
+
+type User struct {
+	...
+}
+    User represents a user in the system with various attributes.
+
+type UserService struct {
+	// Has unexported fields.
+}
+    UserService provides methods for interacting with user data, including
+    retrieving user details by username or ID, listing users, and getting the
+    authenticated user's information.
+
+func (s *UserService) ID(id string) (*User, error)
+    ID retrieves detailed information about a user by their ID.
+
+    Parameters:
+      - id: The ID of the user to retrieve. Required.
+
+    Returns:
+      - *User: A pointer to the retrieved user object.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *UserService) IDLite(id string) (*DisplayUser, error)
+    IDLite retrieves basic information about a user by their ID.
+
+    Parameters:
+      - id: The ID of the user to retrieve. Required.
+
+    Returns:
+      - *DisplayUser: A pointer to the retrieved display user object, containing
+        basic information.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *UserService) Me() (*User, error)
+    Me retrieves information about the authenticated user.
+
+    Returns:
+      - *User: A pointer to the authenticated user's object.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *UserService) User(username string) (*User, error)
+    User retrieves detailed information about a user by their username.
+
+    Parameters:
+      - username: The username of the user to retrieve. Required.
+
+    Returns:
+      - *User: A pointer to the retrieved user object.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *UserService) UserLite(username string) (*DisplayUser, error)
+    UserLite retrieves basic information about a user by their username.
+
+    Parameters:
+      - username: The username of the user to retrieve. Required.
+
+    Returns:
+      - *DisplayUser: A pointer to the retrieved display user object, containing
+        basic information.
+      - error: An error object if the request fails or if the response cannot be
+        parsed.
+
+func (s *UserService) Users(limit *int, before *string) ([]User, error)
+    Users retrieves a list of users with optional pagination.
+
+    Parameters:
+      - limit: Limits the number of results returned. Must be between 0 and
+        1000. Optional.
+      - before: Retrieves users before this cursor (e.g., timestamp or ID).
+        Optional.
+
+    Returns:
+      - []User: A slice of users matching the specified criteria.
+      - error: An error object if the request fails or if input validation
+        fails.
+
