@@ -29,7 +29,7 @@ func checkOneOf[T comparable](value T, allowed ...T) error {
 
 // checkInRange checks if a value is within the allowed range [min, max] and returns a custom error if not.
 func checkInRange[T cmp.Ordered](value, min, max T) error {
-	if value <= min || value >= max {
+	if value < min || value > max {
 		return fmt.Errorf("invalid value: %v, must be within range [%v, %v]", value, min, max)
 	}
 	return nil
